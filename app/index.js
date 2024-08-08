@@ -2,11 +2,12 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Button, SafeAreaView, TextInput, Pressable } from 'react-native';
 import { Link } from 'expo-router';
+import { Login } from './screens/login';
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <Link href={"/screens/login/login.js"} asChild>
+      <Link href={"./screens/login"} asChild>
         <TouchableOpacity >
           <Text style={styles.text}>Não tem token de validação ainda, clica aqui</Text>
         </TouchableOpacity>

@@ -4,7 +4,6 @@ import { StyleSheet, CheckBox, Text, View, TouchableOpacity, Image, Button, Safe
 import { Link } from 'expo-router';
 
 export default function Cadastro() {
-
   return (
     <View style={styles.container}>
       <Image style={styles.img} source={require('../../../assets/images/logo_branco.png')} />
@@ -28,7 +27,7 @@ export default function Cadastro() {
         <Text style={styles.btntext}>Fazer cadastro</Text>
       </TouchableOpacity>
       <View style={styles.textdiv}>
-        <Link href={"screens/login/login"} asChild>
+        <Link href={"screens/login"} asChild>
           <TouchableOpacity >
             <Text style={styles.text}>Já tem uma conta? Faça login</Text>
           </TouchableOpacity>

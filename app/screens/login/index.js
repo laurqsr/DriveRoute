@@ -23,7 +23,7 @@ export default function Login() {
       </TouchableOpacity>
       <View style={styles.textdiv}>
         <Text style={styles.text}>Esqueci a senha</Text>
-        <Link href={"/screens/cadastro/cadastro"} asChild>
+        <Link href={"screens/cadastro"} asChild>
           <TouchableOpacity >
             <Text style={styles.text}>Não tem uma conta? Cadastre-se</Text>
           </TouchableOpacity>
