@@ -16,6 +16,12 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.driveroute.app", 
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBa4NG_INFTFQjeebd88KzroTx_Ag8zl60"  
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

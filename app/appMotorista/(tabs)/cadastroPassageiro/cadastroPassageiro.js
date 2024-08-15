@@ -1,40 +1,57 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, Image, Button, SafeAreaView, TextInput, Pressable } from 'react-native';
+import { StyleSheet, CheckBox, Text, View, TouchableOpacity, Image, Button, SafeAreaView, TextInput, Pressable, Alert } from 'react-native';
 import { Link } from 'expo-router';
 
-export default function Login() {
+export default function Cadastro() {
   return (
     <View style={styles.container}>
-      <Image style={styles.img} source={require('../../../assets/images/logo_branco.png')} />
+        <Text style={styles.title}>Cadastrar Passageiro</Text>
       <StatusBar style="auto" />
       <TextInput
         style={styles.input}
-        placeholder="Insira o seu e-mail"
+        placeholder="Nome do passageiro"
         placeholderTextColor="#308DBF"
       />
       <TextInput
         style={styles.input}
-        placeholder="Insira a sua senha"
+        placeholder="Email"
         placeholderTextColor="#308DBF"
       />
-      <TouchableOpacity style={styles.btn}>
-        <Text style={styles.btntext}>Fazer login</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Cidade"
+        placeholderTextColor="#308DBF"
+      />
+        <TextInput
+        style={styles.input}
+        placeholder="Bairro"
+        placeholderTextColor="#308DBF"
+      />
+        <TextInput
+        style={styles.input}
+        placeholder="Rua"
+        placeholderTextColor="#308DBF"
+      />
+        <TextInput
+        style={styles.input}
+        placeholder="Número da casa"
+        placeholderTextColor="#308DBF"
+      />
+      <TouchableOpacity style={styles.btn} onPress={()=>Alert.alert('Passageiro cadastrado com sucesso')}>
+        <Text style={styles.btntext}>Cadastrar</Text>
       </TouchableOpacity>
-      <View style={styles.textdiv}>
-        <Text style={styles.text}>Esqueci a senha</Text>
-        <Link href={"screens/cadastro"} asChild>
-          <TouchableOpacity >
-            <Text style={styles.text}>Não tem uma conta? Cadastre-se</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
     </View>
   );
 }
 
 
 const styles = StyleSheet.create({
+    title: {   
+        fontSize: 24,
+        color: '#308DBF',
+        marginTop: 10, 
+    },
   text: {
     fontSize: 16,
     lineHeight: 21,
@@ -47,7 +64,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    marginTop: 150,
+    marginTop: 25,
   },
   btntext: {
     fontSize: 16,

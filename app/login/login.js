@@ -3,17 +3,32 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, Button, SafeAreaView, TextInput, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 
-export default function Index() {
+export default function Login() {
   return (
     <View style={styles.container}>
-      <Link href={"/login/login"} asChild>
-        <TouchableOpacity >
-          <Text style={styles.text}>Não tem token de validação ainda, clica aqui</Text>
-        </TouchableOpacity>
-      </Link>
-      <Link href={"appMotorista/home/home"} asChild>
-        <Text style={{marginTop: 25, fontSize: 18}}>Home motora Aqui</Text>
-      </Link>
+     <Image style={styles.img} source={require('../../assets/images/logo_branco.png')}/>
+      <StatusBar style="auto" />
+      <TextInput
+        style={styles.input}
+        placeholder="Insira o seu e-mail"
+        placeholderTextColor="#308DBF"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Insira a sua senha"
+        placeholderTextColor="#308DBF"
+      />
+      <TouchableOpacity style={styles.btn}>
+        <Text style={styles.btntext}>Fazer login</Text>
+      </TouchableOpacity>
+      <View style={styles.textdiv}>
+        <Text style={styles.text}>Esqueci a senha</Text>
+        <Link href={"/cadastro/cadastro"} asChild>
+          <TouchableOpacity >
+            <Text style={styles.text}>Não tem uma conta? Cadastre-se</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
     </View>
   );
 }
@@ -32,7 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    marginTop: 150,
+    marginTop: 25,
   },
   btntext: {
     fontSize: 16,
@@ -77,4 +92,3 @@ const styles = StyleSheet.create({
     height: 100,
   }
 });
-

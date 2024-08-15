@@ -6,11 +6,11 @@ import { Link } from 'expo-router';
 export default function Cadastro() {
   return (
     <View style={styles.container}>
-      <Image style={styles.img} source={require('../../../assets/images/logo_branco.png')} />
+      <Image style={styles.img} source={require('../../assets/images/logo_branco.png')}/>
       <StatusBar style="auto" />
       <TextInput
         style={styles.input}
-        placeholder="Informe o seu e-mail"
+        placeholder="Informe o seu nome"
         placeholderTextColor="#308DBF"
       />
       <TextInput
@@ -27,7 +27,7 @@ export default function Cadastro() {
         <Text style={styles.btntext}>Fazer cadastro</Text>
       </TouchableOpacity>
       <View style={styles.textdiv}>
-        <Link href={"screens/login"} asChild>
+        <Link href={"login/login"} asChild>
           <TouchableOpacity >
             <Text style={styles.text}>Já tem uma conta? Faça login</Text>
           </TouchableOpacity>
@@ -45,13 +45,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 0.25,
     color: '#308DBF',
-    marginTop: 50,
+    marginTop: 5,
   },
   textdiv: {
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-    marginTop: 150,
+    marginTop: 25,
   },
   btntext: {
     fontSize: 16,
