@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, CheckBox, Text, View, TouchableOpacity, Image, Button, SafeAreaView, TextInput, Pressable } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import axios from 'axios';
 
-export default function Cadastro() {
+
+const Cadastro = () => {
+  const [ nome, setNome ] = useState(null);
+  const [ sobrenome, setSobrenome ] = useState(null);
+  const [ email, setEmail ] = useState(null);
+  const [ senha, setSenha ] = useState(null);
+
+  const inserir = async () => {
+    try{
+      const retorno = await axios({
+        method: "post",
+        url: "http://192.168.5.183:5000/motoristas",
+        data: {
+          nome: nome,
+          sobrenome: sobrenome,
+          email: email,
+          senha: senha,
+        },
+      });
+  
+      if(retorno.status == 201){
+        alert('Cadastro criado com sucesso!')
+        router.replace("../appMotorista/(tabs)/home/home")
+      }
+    }
+    catch (error){
+      if(error.response) alert(error.response.data)
+    }
+  }
+  
   return (
     <View style={styles.container}>
       <Image style={styles.img} source={require('../../assets/images/logo_branco.png')}/>
@@ -12,22 +42,33 @@ export default function Cadastro() {
         style={styles.input}
         placeholder="Informe o seu nome"
         placeholderTextColor="#308DBF"
+        onChangeText={setNome}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Informe o seu sobrenome"
+        placeholderTextColor="#308DBF"
+        onChangeText={setSobrenome}
       />
       <TextInput
         style={styles.input}
         placeholder="Informe o seu e-mail"
         placeholderTextColor="#308DBF"
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
         placeholder="Crie uma senha"
         placeholderTextColor="#308DBF"
+        onChangeText={setSenha}
       />
-      <TouchableOpacity style={styles.btn}>
+      <TouchableOpacity style={styles.btn}
+        onPress={inserir}>
         <Text style={styles.btntext}>Fazer cadastro</Text>
       </TouchableOpacity>
+
       <View style={styles.textdiv}>
-        <Link href={"login/login"} asChild>
+      <Link href={"login/login"} asChild>
           <TouchableOpacity >
             <Text style={styles.text}>Já tem uma conta? Faça login</Text>
           </TouchableOpacity>
@@ -36,7 +77,6 @@ export default function Cadastro() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   text: {
@@ -96,3 +136,5 @@ const styles = StyleSheet.create({
     height: 100,
   }
 });
+
+export default Cadastro;
