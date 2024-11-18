@@ -22,10 +22,18 @@ export default function HomeMotorista() {
             <StatusBar barStyle="light-content" backgroundColor="#308DBF" />
             <View style={styles.cabecalho}>
                 <Text style={styles.h2}>Bem vindo, Motorista</Text>
-                <Image style={styles.profileImg} source={require('../../../../assets/images/profileDefault.png')} />
+
             </View>
             <View style={styles.contentContainer}>
                 <Text style={styles.h3}>Endereço de partida</Text>
+                <View style={styles.infoContainer}>
+                    <TextInput
+                        placeholder='endereco'
+                        onChangeText={onChangeText}
+                        value={text}
+                    />
+                </View>
+                <Text style={styles.h3}>Endereço final</Text>
                 <View style={styles.infoContainer}>
                     <TextInput
                         placeholder='endereco'

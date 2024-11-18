@@ -1,121 +1,94 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView, Switch } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import axios from 'axios';
 
 export default function Cadastro() {
-  const [selectedDays, setSelectedDays] = useState({
-    segunda: false,
-    terca: false,
-    quarta: false,
-    quinta: false,
-    sexta: false,
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    cidade: '',
+    bairro: '',
+    rua: '',
+    numero: '',
   });
 
-  const [shifts, setShifts] = useState({
-    segunda: { ida: '', volta: '' },
-    terca: { ida: '', volta: '' },
-    quarta: { ida: '', volta: '' },
-    quinta: { ida: '', volta: '' },
-    sexta: { ida: '', volta: '' },
-  });
-
-  const handleDayToggle = (day, value) => {
-    setSelectedDays((prevDays) => ({
-      ...prevDays,
-      [day]: value,
+  const handleInputChange = (field, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [field]: value,
     }));
   };
 
-  const handleShiftChange = (day, type, value) => {
-    setShifts((prevShifts) => ({
-      ...prevShifts,
-      [day]: {
-        ...prevShifts[day],
-        [type]: value,
-      },
-    }));
+  const handleCadastro = async () => {
+    try {
+      const response = await axios.post('https://driveroute-backend.onrender.com/enderecos/new', formData);
+      Alert.alert('Sucesso', response.data);
+      
+      setFormData({
+        nome: '',
+        email: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        numero: '',
+      });
+    } catch (error) {
+      Alert.alert('Erro', error.response ? error.response.data : error.message);
+    }
   };
 
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.container}>
-        <Text style={styles.title}>Cadastrar Passageiro</Text>
+        <Text style={styles.title}>Cadastrar Endereço</Text>
         <StatusBar style="auto" />
         <TextInput
           style={styles.input}
-          placeholder="Nome do passageiro"
+          placeholder="Nome"
           placeholderTextColor="#308DBF"
+          value={formData.nome}
+          onChangeText={(value) => handleInputChange('nome', value)}
         />
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#308DBF"
+          keyboardType="email-address"
+          value={formData.email}
+          onChangeText={(value) => handleInputChange('email', value)}
         />
         <TextInput
           style={styles.input}
           placeholder="Cidade"
           placeholderTextColor="#308DBF"
+          value={formData.cidade}
+          onChangeText={(value) => handleInputChange('cidade', value)}
         />
         <TextInput
           style={styles.input}
           placeholder="Bairro"
           placeholderTextColor="#308DBF"
+          value={formData.bairro}
+          onChangeText={(value) => handleInputChange('bairro', value)}
         />
         <TextInput
           style={styles.input}
           placeholder="Rua"
           placeholderTextColor="#308DBF"
+          value={formData.rua}
+          onChangeText={(value) => handleInputChange('rua', value)}
         />
         <TextInput
           style={styles.input}
           placeholder="Número da casa"
           placeholderTextColor="#308DBF"
+          keyboardType="numeric"
+          value={formData.numero}
+          onChangeText={(value) => handleInputChange('numero', value)}
         />
 
-        <View style={styles.checkboxContainer}>
-          {Object.keys(selectedDays).map((day) => (
-            <View key={day} style={styles.dayContainer}>
-              <Switch
-                value={selectedDays[day]}
-                onValueChange={(newValue) => handleDayToggle(day, newValue)}
-              />
-              <Text style={styles.checkboxLabel}>
-                {day.charAt(0).toUpperCase() + day.slice(1)}
-              </Text>
-              {selectedDays[day] && (
-                <View style={styles.pickerContainer}>
-                  <View style={styles.pickerWrapper}>
-                    <Text style={styles.pickerLabel}>Ida:</Text>
-                    <Picker
-                      selectedValue={shifts[day].ida}
-                      style={styles.picker}
-                      onValueChange={(value) => handleShiftChange(day, 'ida', value)}
-                    >
-                      <Picker.Item label="Manhã" value="manhã" />
-                      <Picker.Item label="Tarde" value="tarde" />
-                      <Picker.Item label="Noite" value="noite" />
-                    </Picker>
-                  </View>
-                  <View style={styles.pickerWrapper}>
-                    <Text style={styles.pickerLabel}>Volta:</Text>
-                    <Picker
-                      selectedValue={shifts[day].volta}
-                      style={styles.picker}
-                      onValueChange={(value) => handleShiftChange(day, 'volta', value)}
-                    >
-                      <Picker.Item label="Manhã" value="manhã" />
-                      <Picker.Item label="Tarde" value="tarde" />
-                      <Picker.Item label="Noite" value="noite" />
-                    </Picker>
-                  </View>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.btn} onPress={() => Alert.alert('Passageiro cadastrado com sucesso')}>
+        <TouchableOpacity style={styles.btn} onPress={handleCadastro}>
           <Text style={styles.btntext}>Cadastrar</Text>
         </TouchableOpacity>
       </View>
@@ -166,38 +139,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 0.25,
     color: 'white',
-  },
-  checkboxContainer: {
-    marginTop: 20,
-    width: '100%',
-  },
-  dayContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  checkboxLabel: {
-    fontSize: 18,
-    color: '#308DBF',
-    marginLeft: 8,
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 10,
-  },
-  pickerWrapper: {
-    flex: 1,
-    marginRight: 5,
-  },
-  pickerLabel: {
-    fontSize: 16,
-    color: '#308DBF',
-    marginBottom: 5,
-  },
-  picker: {
-    height: 50,
-    width: '100%',
   },
 });

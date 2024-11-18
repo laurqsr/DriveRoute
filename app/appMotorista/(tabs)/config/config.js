@@ -5,7 +5,6 @@ export default function Config() {
         <View>
           <View style={styles.cabecalho}>
                     <Text style={styles.h2}>Configuraçãoes do perfil</Text>
-                    <Image style={styles.profileImg} source={require('../../../../assets/images/profileDefault.png')} />
             </View>
             <TouchableOpacity style={styles.btn}>
                 <Text style={styles.btnText}>Alterar informações pessoais</Text>
