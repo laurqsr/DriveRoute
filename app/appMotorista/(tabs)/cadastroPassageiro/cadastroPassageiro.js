@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import axios from 'axios';
+import { useRouter } from 'expo-router';
+import { DRIVEROUTE_API } from '@env';
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
@@ -13,6 +15,8 @@ export default function Cadastro() {
     numero: '',
   });
 
+  const router = useRouter();
+
   const handleInputChange = (field, value) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -22,9 +26,10 @@ export default function Cadastro() {
 
   const handleCadastro = async () => {
     try {
-      const response = await axios.post('https://driveroute-backend.onrender.com/enderecos/new', formData);
-      Alert.alert('Sucesso', response.data);
-      
+      const response = await axios.post(`${DRIVEROUTE_API}/enderecos/new`, formData);
+      Alert.alert('Sucesso', 'Passageiro cadastrado com sucesso!');
+
+      // Limpar formulário
       setFormData({
         nome: '',
         email: '',
@@ -33,6 +38,7 @@ export default function Cadastro() {
         rua: '',
         numero: '',
       });
+
     } catch (error) {
       Alert.alert('Erro', error.response ? error.response.data : error.message);
     }
@@ -41,7 +47,7 @@ export default function Cadastro() {
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
       <View style={styles.container}>
-        <Text style={styles.title}>Cadastrar Endereço</Text>
+        <Text style={styles.title}>Cadastrar Passageiro</Text>
         <StatusBar style="auto" />
         <TextInput
           style={styles.input}
@@ -81,7 +87,7 @@ export default function Cadastro() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Número da casa"
+          placeholder="Número"
           placeholderTextColor="#308DBF"
           keyboardType="numeric"
           value={formData.numero}
@@ -104,6 +110,12 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     alignItems: 'center',
   },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
   title: {
     fontSize: 24,
     color: '#308DBF',
@@ -119,12 +131,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderColor: '#308DBF',
   },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-  },
   btn: {
     marginTop: 20,
     padding: 15,
@@ -135,9 +141,7 @@ const styles = StyleSheet.create({
   },
   btntext: {
     fontSize: 16,
-    lineHeight: 21,
     fontWeight: 'bold',
-    letterSpacing: 0.25,
     color: 'white',
   },
 });

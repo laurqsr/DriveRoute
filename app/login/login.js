@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import { Link, useRouter } from 'expo-router'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { DRIVEROUTE_API } from '@env';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -11,17 +13,21 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('https://driveroute-backend.onrender.com/motoristas/login', {
+      const response = await axios.post(`${DRIVEROUTE_API}/motoristas/login`, {
         email,
         senha,
       });
 
       if (response.status === 200) {
+        
+        const motorista = response.data; 
+        await AsyncStorage.setItem('@motorista_id', String(motorista.id)); 
+
         Alert.alert('Sucesso', 'Bem-vindo ao DriveRoute!', [
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/appMotorista/(tabs)/home/home'); 
+              router.replace('/appMotorista/(tabs)/home/home');
             },
           },
         ]);
@@ -29,7 +35,6 @@ export default function Login() {
         Alert.alert('Erro', response.data || 'Erro desconhecido!');
       }
 
-      
     } catch (error) {
       if (error.response) {
         Alert.alert('Erro', error.response.data || 'Credenciais inválidas!');

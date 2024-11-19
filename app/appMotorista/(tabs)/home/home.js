@@ -1,170 +1,199 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, StatusBar, TouchableOpacity, Animated, Easing, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Image, View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Alert, StatusBar } from 'react-native';
+import axios from 'axios';
+import * as Location from 'expo-location';
 import { Link } from 'expo-router';
+import { GOOGLE_MAPS_APIKEY } from '@env';
+import { DRIVEROUTE_API } from '@env';
 
 export default function HomeMotorista() {
-    const [expanded, setExpanded] = useState(false);
-    const [fadeAnim] = useState(new Animated.Value(0));
-    const [text, onChangeText] = useState('Rua Dezessete de junho, 2411, Centro');
+  const [enderecos, setEnderecos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [enderecoPartida, setEnderecoPartida] = useState('');
 
-    const toggleExpansion = () => {
-        setExpanded(!expanded);
-        Animated.timing(fadeAnim, {
-            toValue: expanded ? 0 : 1,
-            duration: 300,
-            easing: Easing.ease,
-            useNativeDriver: true,
-        }).start();
-    };
+  const fetchEnderecos = async () => {
+    try {
+      setLoading(true); 
+      const response = await axios.get(`${DRIVEROUTE_API}/enderecos/listar`);
+      if (response.status === 200) {
+        setEnderecos(response.data); 
+      } else {
+        console.error('Erro ao buscar endereços:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Erro na requisição de endereços:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <View style={styles.container}>
-            <StatusBar barStyle="light-content" backgroundColor="#308DBF" />
-            <View style={styles.cabecalho}>
-                <Text style={styles.h2}>Bem vindo, Motorista</Text>
+  const fetchCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão negada', 'Habilite a permissão de localização nas configurações.');
+        return;
+      }
 
-            </View>
-            <View style={styles.contentContainer}>
-                <Text style={styles.h3}>Endereço de partida</Text>
-                <View style={styles.infoContainer}>
-                    <TextInput
-                        placeholder='endereco'
-                        onChangeText={onChangeText}
-                        value={text}
-                    />
-                </View>
-                <Text style={styles.h3}>Endereço final</Text>
-                <View style={styles.infoContainer}>
-                    <TextInput
-                        placeholder='endereco'
-                        onChangeText={onChangeText}
-                        value={text}
-                    />
-                </View>
-                <Text style={styles.h3}>Passageiros de Hoje</Text>
-                <View style={styles.seeAllpassagers}>
-                    <View style={styles.passengerRow}>
-                        <View style={styles.passengerInfo}>
-                            <View style={styles.passengerCard}>
-                                <Text style={styles.passengerName}>João Silva</Text>
-                                <Text style={styles.passengerAddress}>Rua Fictícia, 123</Text>
-                            </View>
-                        </View>
-                        <TouchableOpacity onPress={toggleExpansion} style={styles.expandButton}>
-                            <Image
-                                style={styles.expandButtonImage}
-                                source={expanded ? require('../../../../assets/images/collapse.png') : require('../../../../assets/images/expand.png')}
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    <Animated.View style={[styles.passengerList, { opacity: fadeAnim }]}>
-                        {expanded && (
-                            <View>
-                                <Text style={styles.passengerName}>Carlos Souza</Text>
-                                <Text style={styles.passengerAddress}>Rua das Flores, 789</Text>
-                                <Text style={styles.passengerName}>Jean Altroz</Text>
-                                <Text style={styles.passengerAddress}>Rua augusta, 012</Text>
-                                <Text style={styles.passengerName}>Maria Oliveira</Text>
-                                <Text style={styles.passengerAddress}>Av. Imaginária, 456</Text>
-                            </View>
-                        )}
-                    </Animated.View>
-                </View>
-            </View>
-            <Link href='../../rota/rota' style={styles.btnRota} asChild>
-                <TouchableOpacity>
-                    <Image style={{ width: 40, height: 40 }} source={require('../../../../assets/images/routeBtn.png')} />
-                    <Text style={styles.text}>Gerar rota</Text>
-                </TouchableOpacity>
-            </Link>
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_APIKEY}`
+      );
+
+      if (response.data.results.length > 0) {
+        let fullAddress = response.data.results[0].formatted_address;
+        const cleanedAddress = fullAddress.replace(/^[^,]+, /, ''); 
+        setEnderecoPartida(fullAddress);
+      } else {
+        Alert.alert('Erro', 'Não foi possível obter o endereço atual.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível obter a localização.');
+      console.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchEnderecos();
+    fetchCurrentLocation();
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#308DBF" />
+      <View style={styles.cabecalho}>
+        <Text style={styles.h2}>DriveRoute</Text>
+        <Text style={styles.h2}>Gere suas rotas</Text>
+      </View>
+      <View style={styles.contentContainer}>
+        <Text style={styles.h3}>Endereço de partida</Text>
+        <View style={styles.infoContainer}>
+          <TextInput
+            placeholder="Endereço de partida"
+            value={enderecoPartida}
+            style={styles.input}
+            editable={false} 
+          />
         </View>
-    );
+        <Text style={styles.h3}>Passageiros de Hoje</Text>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
+          {loading ? (
+            <ActivityIndicator size="large" color="#308DBF" />
+          ) : enderecos.length > 0 ? (
+            enderecos.map((endereco, index) => (
+              <View key={index} style={styles.card}>
+                <Text style={styles.passengerName}>{endereco.nome}</Text>
+                <Text style={styles.passengerAddress}>Rua: {endereco.rua}, Nº: {endereco.numero}</Text>
+                <Text style={styles.passengerAddress}>
+                  Bairro: {endereco.bairro}, Cidade: {endereco.cidade}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.text}>Nenhum passageiro cadastrado.</Text>
+          )}
+        </ScrollView>
+      </View>
+      <TouchableOpacity style={styles.btn} onPress={fetchEnderecos}>
+        <Text style={styles.btntext}>Atualizar Lista</Text>
+      </TouchableOpacity>
+      <Link href="../../rota/rota" style={styles.btnRota} asChild>
+        <TouchableOpacity>
+        <Image style={{ width: 40, height: 40 }} source={require('../../../../assets/images/routeBtn.png')} />
+          <Text style={styles.text}>Gerar rota</Text>
+        </TouchableOpacity>
+      </Link>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    text: {
-        fontWeight: 'bold',
-    },
-    cabecalho: {
-        backgroundColor: '#308DBF',
-        height: 120,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    infoContainer: {
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        justifyContent: 'space-between',
-    },
-    h2: {
-        fontSize: 20,
-        color: '#fff',
-        fontWeight: 'bold',
-        paddingRight: 20,
-    },
-    profileImg: {
-        width: 50,
-        height: 50,
-        borderRadius: 50,
-    },
-    contentContainer: {
-        flex: 1,
-        padding: 15,
-    },
-    h3: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginTop: 20,
-    },
-    passengerRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    passengerInfo: {
-        flex: 1,
-    },
-    passengerName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    passengerAddress: {
-        fontSize: 16,
-        color: '#555',
-        marginBottom: 10,
-    },
-    expandButton: {
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    expandButtonImage: {
-        width: 20,
-        height: 13,
-    },
-    seeAllpassagers: {
-        marginTop: 10,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 10,
-        padding: 10,
-        borderColor: '#ddd',
-        borderWidth: 1,
-    },
-    btnRota: {
-        position: 'absolute',
-        bottom: 10,
-        left: '47%',
-        transform: [{ translateX: -20 }],
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 50,
-        borderColor: '#308DBF',
-    },
+  container: {
+    flex: 1,
+  },
+  text: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cabecalho: {
+    backgroundColor: '#308DBF',
+    height: 120,
+    display: 'flex',
+    flexDirection: 'collun',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  input: {
+    height: 40,
+    borderColor: '#308DBF',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    width: '100%',
+  },
+  h2: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
+    paddingRight: 20,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 15,
+  },
+  h3: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  scrollView: {
+    marginVertical: 10,
+    maxHeight: 250,
+  },
+  scrollViewContent: {
+    alignItems: 'center',
+  },
+  card: {
+    padding: 15,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    marginBottom: 10,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  passengerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  passengerAddress: {
+    fontSize: 14,
+    color: '#555',
+  },
+  btn: {
+    padding: 15,
+    marginHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: '#308DBF',
+    alignItems: 'center',
+  },
+  btntext: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  btnRota: {
+    marginTop: 20,
+    padding: 15,
+    alignItems: 'center',
+  },
 });

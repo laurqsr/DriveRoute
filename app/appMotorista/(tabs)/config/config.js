@@ -1,4 +1,6 @@
 import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity} from 'react-native';
+import { Link } from 'expo-router';
+
 
 export default function Config() {
     return (
@@ -9,9 +11,11 @@ export default function Config() {
             <TouchableOpacity style={styles.btn}>
                 <Text style={styles.btnText}>Alterar informações pessoais</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnQuit}>
-                <Text style={styles.btnTextQuit}>Sair</Text>
-            </TouchableOpacity>
+            <Link href='/login/login' asChild>
+                <TouchableOpacity style={styles.btnQuit} onPress={()=>{}}>
+                    <Text style={styles.btnTextQuit}>Sair</Text>
+                </TouchableOpacity>
+            </Link>
         </View>
     )
 }

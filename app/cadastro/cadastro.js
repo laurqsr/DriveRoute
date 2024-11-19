@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'react-native';
 import { Link, router } from 'expo-router';
 import axios from 'axios';
+import { DRIVEROUTE_API } from '@env';
 
 
 const Cadastro = () => {
@@ -34,7 +35,7 @@ const Cadastro = () => {
     setIsLoading(true);
 
     try {
-      const retorno = await axios.post("https://driveroute-backend.onrender.com/motoristas/new", {
+      const retorno = await axios.post(`${DRIVEROUTE_API}/motoristas/new`, {
         nome,
         sobrenome,
         email,
