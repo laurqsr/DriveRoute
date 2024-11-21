@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'react-native';
 import { Link, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { DRIVEROUTE_API } from '@env';
 
-
 const Cadastro = () => {
-
   const [nome, setNome] = useState('');
   const [sobrenome, setSobrenome] = useState('');
   const [email, setEmail] = useState('');
@@ -35,14 +34,17 @@ const Cadastro = () => {
     setIsLoading(true);
 
     try {
-      const retorno = await axios.post(`${DRIVEROUTE_API}/motoristas/new`, {
+      const response = await axios.post(`${DRIVEROUTE_API}/motoristas/new`, {
         nome,
         sobrenome,
         email,
         senha,
       });
 
-      if (retorno.status === 201) {
+      if (response.status === 201) {
+        const motoristaId = response.data.id;
+        await AsyncStorage.setItem('@motorista_id', String(motoristaId)); 
+
         alert("Cadastro criado com sucesso! Bem-vindo ao DriveRoute!");
         router.replace("../appMotorista/(tabs)/home/home");
       }

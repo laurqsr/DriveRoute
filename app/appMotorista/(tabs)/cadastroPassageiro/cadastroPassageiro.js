@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
 import { DRIVEROUTE_API } from '@env';
 
-export default function Cadastro() {
+export default function CadastroPassageiro() {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -14,8 +14,25 @@ export default function Cadastro() {
     rua: '',
     numero: '',
   });
+  const [motoristaId, setMotoristaId] = useState(null);
 
-  const router = useRouter();
+  const fetchMotoristaId = async () => {
+    try {
+      const id = await AsyncStorage.getItem('@motorista_id');
+      console.log('ID do motorista recuperado do AsyncStorage:', id);
+      if (id) {
+        setMotoristaId(id);
+      } else {
+        Alert.alert('Erro', 'ID do motorista não encontrado. Faça login novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar o ID do motorista:', error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchMotoristaId();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData((prevData) => ({
@@ -25,21 +42,32 @@ export default function Cadastro() {
   };
 
   const handleCadastro = async () => {
+    if (!motoristaId) {
+      Alert.alert('Erro', 'ID do motorista não encontrado. Faça login novamente.');
+      return;
+    }
+
     try {
-      const response = await axios.post(`${DRIVEROUTE_API}/enderecos/new`, formData);
-      Alert.alert('Sucesso', 'Passageiro cadastrado com sucesso!');
+      const payload = { ...formData, motorista: motoristaId }; 
+      console.log('Enviando dados para o backend:', payload); 
 
-      // Limpar formulário
-      setFormData({
-        nome: '',
-        email: '',
-        cidade: '',
-        bairro: '',
-        rua: '',
-        numero: '',
-      });
+      const response = await axios.post(`${DRIVEROUTE_API}/enderecos/new`, payload);
 
+      if (response.status === 201) {
+        Alert.alert('Sucesso', 'Passageiro cadastrado com sucesso!');
+        setFormData({
+          nome: '',
+          email: '',
+          cidade: '',
+          bairro: '',
+          rua: '',
+          numero: '',
+        });
+      } else {
+        console.error('Erro ao cadastrar passageiro:', response.data);
+      }
     } catch (error) {
+      console.error('Erro ao cadastrar passageiro:', error.message);
       Alert.alert('Erro', error.response ? error.response.data : error.message);
     }
   };
@@ -93,7 +121,6 @@ export default function Cadastro() {
           value={formData.numero}
           onChangeText={(value) => handleInputChange('numero', value)}
         />
-
         <TouchableOpacity style={styles.btn} onPress={handleCadastro}>
           <Text style={styles.btntext}>Cadastrar</Text>
         </TouchableOpacity>

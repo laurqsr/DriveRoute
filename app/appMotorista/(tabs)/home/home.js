@@ -1,32 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import { Image, View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, ScrollView, Alert, StatusBar } from 'react-native';
+import {
+  StatusBar,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  ScrollView,
+  Alert,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import * as Location from 'expo-location';
 import { Link } from 'expo-router';
-import { GOOGLE_MAPS_APIKEY } from '@env';
-import { DRIVEROUTE_API } from '@env';
+import * as Location from 'expo-location';
+import { DRIVEROUTE_API, GOOGLE_MAPS_APIKEY } from '@env';
 
 export default function HomeMotorista() {
   const [enderecos, setEnderecos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enderecoPartida, setEnderecoPartida] = useState('');
+  const [motoristaId, setMotoristaId] = useState(null);
 
-  const fetchEnderecos = async () => {
+  // Busca o ID do motorista armazenado no AsyncStorage
+  const fetchMotoristaId = async () => {
     try {
-      setLoading(true); 
-      const response = await axios.get(`${DRIVEROUTE_API}/enderecos/listar`);
-      if (response.status === 200) {
-        setEnderecos(response.data); 
+      const id = await AsyncStorage.getItem('@motorista_id');
+      if (id) {
+        const parsedId = parseInt(id, 10); // Converte o ID para inteiro
+        setMotoristaId(parsedId);
+        console.log('Motorista ID recuperado:', parsedId);
       } else {
-        console.error('Erro ao buscar endereços:', response.statusText);
+        Alert.alert('Erro', 'ID do motorista não encontrado no armazenamento.');
       }
     } catch (error) {
-      console.error('Erro na requisição de endereços:', error.message);
-    } finally {
-      setLoading(false);
+      console.error('Erro ao buscar o ID do motorista:', error.message);
     }
   };
 
+  // Busca a localização atual do motorista para definir o endereço de partida
   const fetchCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -38,27 +51,70 @@ export default function HomeMotorista() {
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
 
+      console.log('Localização atual:', latitude, longitude);
+
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_APIKEY}`
       );
 
-      if (response.data.results.length > 0) {
-        let fullAddress = response.data.results[0].formatted_address;
-        const cleanedAddress = fullAddress.replace(/^[^,]+, /, ''); 
+      if (response.data && response.data.results && response.data.results.length > 0) {
+        const fullAddress = response.data.results[0].formatted_address;
         setEnderecoPartida(fullAddress);
+        console.log('Endereço de partida atualizado:', fullAddress);
       } else {
+        console.error('Resposta da API:', response.data);
         Alert.alert('Erro', 'Não foi possível obter o endereço atual.');
       }
     } catch (error) {
+      console.error('Erro ao obter localização:', error.message);
       Alert.alert('Erro', 'Não foi possível obter a localização.');
-      console.error(error.message);
     }
   };
 
+  // Busca os endereços relacionados ao ID do motorista
+  const fetchEnderecos = async () => {
+    if (!motoristaId) return;
+
+    try {
+      setLoading(true);
+      console.log('Buscando endereços para o motorista ID:', motoristaId);
+
+      const response = await axios.get(`${DRIVEROUTE_API}/enderecos/listar`, {
+        params: { motoristaId },
+      });
+
+      if (response.status === 200) {
+        if (response.data.length > 0) {
+          setEnderecos(response.data);
+          console.log('Endereços encontrados:', response.data);
+        } else {
+          setEnderecos([]);
+          console.log('Nenhum passageiro cadastrado.');
+        }
+      } else {
+        Alert.alert('Erro', 'Resposta inesperada do servidor.');
+        console.warn('Resposta inesperada:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Erro na requisição de endereços:', error.message);
+      Alert.alert('Erro', 'Não foi possível buscar os endereços.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Inicializa o ID do motorista e a localização ao carregar o componente
   useEffect(() => {
-    fetchEnderecos();
+    fetchMotoristaId();
     fetchCurrentLocation();
   }, []);
+
+  // Atualiza a lista de endereços ao recuperar o ID do motorista
+  useEffect(() => {
+    if (motoristaId) {
+      fetchEnderecos();
+    }
+  }, [motoristaId]);
 
   return (
     <View style={styles.container}>
@@ -74,10 +130,10 @@ export default function HomeMotorista() {
             placeholder="Endereço de partida"
             value={enderecoPartida}
             style={styles.input}
-            editable={false} 
+            editable={false}
           />
         </View>
-        <Text style={styles.h3}>Passageiros de Hoje</Text>
+        <Text style={styles.h3}>Lista de passageiros</Text>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent}>
           {loading ? (
             <ActivityIndicator size="large" color="#308DBF" />
@@ -100,9 +156,11 @@ export default function HomeMotorista() {
         <Text style={styles.btntext}>Atualizar Lista</Text>
       </TouchableOpacity>
       <Link href="../../rota/rota" style={styles.btnRota} asChild>
-        <TouchableOpacity>
-        <Image style={{ width: 40, height: 40 }} source={require('../../../../assets/images/routeBtn.png')} />
-          <Text style={styles.text}>Gerar rota</Text>
+        <TouchableOpacity disabled={enderecos.length < 2}>
+          <Image style={{ width: 40, height: 40 }} source={require('../../../../assets/images/routeBtn.png')} />
+          <Text style={[styles.text, enderecos.length < 2 ? { color: '#A9A9A9' } : {}]}>
+            {enderecos.length < 2 ? 'Adicione pelo menos 2 passageiros' : 'Gerar rota'}
+          </Text>
         </TouchableOpacity>
       </Link>
     </View>
@@ -121,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#308DBF',
     height: 120,
     display: 'flex',
-    flexDirection: 'collun',
+    flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -143,7 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
-    paddingRight: 20,
   },
   contentContainer: {
     flex: 1,
@@ -156,7 +213,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     marginVertical: 10,
-    maxHeight: 250,
+    maxHeight: 350,
   },
   scrollViewContent: {
     alignItems: 'center',

@@ -17,31 +17,26 @@ export default function Login() {
         email,
         senha,
       });
-
+    
       if (response.status === 200) {
-        
-        const motorista = response.data; 
-        await AsyncStorage.setItem('@motorista_id', String(motorista.id)); 
-
-        Alert.alert('Sucesso', 'Bem-vindo ao DriveRoute!', [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.replace('/appMotorista/(tabs)/home/home');
-            },
-          },
-        ]);
-      } else {
-        Alert.alert('Erro', response.data || 'Erro desconhecido!');
+        const motorista = response.data;
+        await AsyncStorage.setItem('@motorista_id', String(motorista.id));
+        alert('Bem-vindo ao DriveRoute!');
+        router.replace('../appMotorista/(tabs)/home/home');
       }
-
     } catch (error) {
+      console.error('Erro ao conectar:', error.response ? error.response.data : error.message);
+      Alert.alert('Erro', 'Detalhes: ' + (error.response ? error.response.data : error.message));
       if (error.response) {
-        Alert.alert('Erro', error.response.data || 'Credenciais inválidas!');
+        const errorMessage = typeof error.response.data === 'string'
+          ? error.response.data
+          : error.response.data.message || 'Erro desconhecido';
+        alert(`Erro: ${errorMessage}`);
       } else {
-        Alert.alert('Erro', 'Falha na conexão. Tente novamente mais tarde.');
+        alert('Erro ao tentar se conectar. Verifique sua conexão com a internet.');
       }
     }
+    
   };
 
   return (
@@ -68,7 +63,6 @@ export default function Login() {
         <Text style={styles.btntext}>Fazer login</Text>
       </TouchableOpacity>
       <View style={styles.textdiv}>
-        <Text style={styles.text}>Esqueci a senha</Text>
         <Link href="/cadastro/cadastro" asChild>
           <TouchableOpacity>
             <Text style={styles.text}>Não tem uma conta? Cadastre-se</Text>

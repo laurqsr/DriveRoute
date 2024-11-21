@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "driveroute",
+    "name": "Driveroute",
     "slug": "driveroute",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo_azul.png",
-    "scheme": "myapp",
+    "icon": "./assets/images/icon_apk.png",
+    "scheme": "driveroute",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/icon_apk.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,14 +16,20 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.driveroute.app", 
+      "package": "com.driveroute.app",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET"
+      ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyBa4NG_INFTFQjeebd88KzroTx_Ag8zl60"  
+          "apiKey": "AIzaSyBa4NG_INFTFQjeebd88KzroTx_Ag8zl60"
         }
       },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icon_apk.png",
         "backgroundColor": "#ffffff"
       }
     },
@@ -37,6 +43,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "68da99e3-5530-45df-82c6-787d1ada875f"
+      }
     }
   }
 }

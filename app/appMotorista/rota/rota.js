@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, TextInput, Alert, ActivityIndicator, Dimensions, Linking } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+  Dimensions,
+  Linking,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapa from '../../../components/mapa/mapa';
 import { Link } from 'expo-router';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { GOOGLE_MAPS_APIKEY, DRIVEROUTE_API } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +26,46 @@ export default function Rota() {
   const [enderecoPartida, setEnderecoPartida] = useState('');
   const [enderecoChegada, setEnderecoChegada] = useState('R. Guilherme Lahm, 1778 - Jardim do Prado, Taquara - RS, 95600-000');
   const [tempoEstimado, setTempoEstimado] = useState('');
+  const [motoristaId, setMotoristaId] = useState(null);
+
+  const fetchMotoristaId = async () => {
+    try {
+      const id = await AsyncStorage.getItem('@motorista_id');
+      if (id) {
+        setMotoristaId(parseInt(id, 10));
+        console.log('ID do motorista:', id);
+      } else {
+        Alert.alert('Erro', 'ID do motorista não encontrado.');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar o ID do motorista:', error.message);
+    }
+  };
+
+  const fetchEnderecos = async () => {
+    if (!motoristaId) return;
+
+    try {
+      setLoading(true);
+      console.log(`Buscando endereços para o motorista ID: ${motoristaId}`);
+      const response = await axios.get(`${DRIVEROUTE_API}/enderecos/listar`, {
+        params: { motoristaId },
+      });
+
+      if (response.status === 200) {
+        setEnderecos(response.data);
+        console.log('Endereços encontrados:', response.data);
+      } else {
+        setEnderecos([]);
+        console.warn('Nenhum endereço encontrado.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível buscar os endereços.');
+      console.error('Erro ao buscar endereços:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCurrentLocation = async () => {
     try {
@@ -34,7 +85,7 @@ export default function Rota() {
       if (response.data.results.length > 0) {
         const fullAddress = response.data.results[0].formatted_address;
         setEnderecoPartida(fullAddress);
-        calcularTempoEstimado(fullAddress, enderecoChegada);
+        console.log('Endereço de partida atualizado:', fullAddress);
       } else {
         Alert.alert('Erro', 'Não foi possível obter o endereço atual.');
       }
@@ -44,44 +95,56 @@ export default function Rota() {
     }
   };
 
-  const fetchEnderecos = async () => {
+  const optimizeWaypoints = async (partida, chegada, waypoints) => {
     try {
-      const response = await axios.get(`${DRIVEROUTE_API}/enderecos/listar`);
-      if (response.status === 200) {
-        setEnderecos(response.data);
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
+          partida
+        )}&destination=${encodeURIComponent(chegada)}&waypoints=optimize:true|${encodeURIComponent(
+          waypoints.join('|')
+        )}&key=${GOOGLE_MAPS_APIKEY}`
+      );
+
+      if (response.data.routes && response.data.routes.length > 0) {
+        const optimizedWaypoints = response.data.routes[0].waypoint_order.map((index) => waypoints[index]);
+        return optimizedWaypoints;
       } else {
-        alert('Não foi possível buscar os endereços.');
+        console.warn('Não foi possível otimizar os waypoints:', response.data);
+        return waypoints;
       }
     } catch (error) {
-      alert('Erro ao buscar endereços.');
-    } finally {
-      setLoading(false);
+      console.error('Erro ao otimizar waypoints:', error.message);
+      return waypoints;
     }
   };
 
-  const calcularTempoEstimado = async (partida = enderecoPartida, chegada = enderecoChegada) => {
+  const calcularTempoEstimado = async () => {
     try {
-      if (!partida || !chegada) {
+      if (!enderecoPartida || !enderecoChegada) {
         Alert.alert('Erro', 'Por favor, preencha os endereços de partida e chegada.');
         return;
       }
 
-      const waypoints = enderecos.map(
-        (endereco) => `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}`
-      );
+      const waypoints = enderecos
+        .map((endereco) => `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}`)
+        .filter(Boolean);
 
-      const waypointsStr = waypoints.join('|');
+      const optimizedWaypoints = await optimizeWaypoints(enderecoPartida, enderecoChegada, waypoints);
+
       const response = await axios.get(
         `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(
-          partida
-        )}&destination=${encodeURIComponent(chegada)}&waypoints=${encodeURIComponent(waypointsStr)}&key=${GOOGLE_MAPS_APIKEY}`
+          enderecoPartida
+        )}&destination=${encodeURIComponent(enderecoChegada)}&waypoints=${encodeURIComponent(
+          optimizedWaypoints.join('|')
+        )}&key=${GOOGLE_MAPS_APIKEY}`
       );
 
-      if (response.data.routes.length > 0) {
+      if (response.data.routes && response.data.routes.length > 0) {
         const duration = response.data.routes[0].legs.reduce((total, leg) => total + leg.duration.value, 0);
         setTempoEstimado(`${Math.round(duration / 60)} min`);
       } else {
         Alert.alert('Erro', 'Não foi possível calcular o tempo estimado.');
+        console.warn('Resposta inesperada:', response.data);
       }
     } catch (error) {
       Alert.alert('Erro', 'Falha ao calcular o tempo estimado.');
@@ -89,7 +152,7 @@ export default function Rota() {
     }
   };
 
-  const iniciarRota = () => {
+  const iniciarRota = async () => {
     if (!tempoEstimado) {
       Alert.alert('Erro', 'Por favor, atualize a rota antes de iniciar.');
       return;
@@ -97,11 +160,15 @@ export default function Rota() {
 
     const waypoints = enderecos
       .map((endereco) => `${endereco.rua}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}`)
-      .join('|');
+      .filter(Boolean);
+
+    const optimizedWaypoints = await optimizeWaypoints(enderecoPartida, enderecoChegada, waypoints);
 
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(
       enderecoPartida
-    )}&destination=${encodeURIComponent(enderecoChegada)}&waypoints=${encodeURIComponent(waypoints)}&travelmode=driving`;
+    )}&destination=${encodeURIComponent(enderecoChegada)}&waypoints=${encodeURIComponent(
+      optimizedWaypoints.join('|')
+    )}&travelmode=driving`;
 
     Linking.openURL(googleMapsUrl).catch(() =>
       Alert.alert('Erro', 'Não foi possível abrir o Google Maps.')
@@ -109,19 +176,15 @@ export default function Rota() {
   };
 
   useEffect(() => {
-    fetchEnderecos();
+    fetchMotoristaId();
     fetchCurrentLocation();
   }, []);
 
   useEffect(() => {
-    if (enderecoPartida && enderecoChegada) {
-      calcularTempoEstimado(enderecoPartida, enderecoChegada);
+    if (motoristaId) {
+      fetchEnderecos();
     }
-  }, [enderecoPartida, enderecoChegada]);
-
-  if (loading) {
-    return <ActivityIndicator size="large" color="#308DBF" />;
-  }
+  }, [motoristaId]);
 
   return (
     <View style={styles.container}>
@@ -161,7 +224,7 @@ export default function Rota() {
             value={enderecoChegada}
             onChangeText={(text) => setEnderecoChegada(text)}
           />
-          <TouchableOpacity style={styles.updateBtn} onPress={() => calcularTempoEstimado()}>
+          <TouchableOpacity style={styles.updateBtn} onPress={calcularTempoEstimado}>
             <Text style={styles.updateBtnText}>Atualizar Rota</Text>
           </TouchableOpacity>
         </View>
