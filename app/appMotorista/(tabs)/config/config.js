@@ -6,10 +6,8 @@ export default function Config() {
     return (
         <View>
           <View style={styles.cabecalho}>
+                    <Text style={styles.h2}>Configuraçãoes do perfil</Text>
             </View>
-            <TouchableOpacity style={styles.btn}>
-                <Text style={styles.btnText}>Alterar informações pessoais</Text>
-            </TouchableOpacity>
             <Link href='/login/login' asChild>
                 <TouchableOpacity style={styles.btnQuit} onPress={()=>{}}>
                     <Text style={styles.btnTextQuit}>Sair</Text>
@@ -27,6 +25,12 @@ const styles=StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    h2: {
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: 'bold',
+        paddingRight: 20,
     },
     profileImg: {
         width: 50,
